@@ -25,6 +25,11 @@ func Load[T any](target *T, config Config) (err error) {
 		field := proxy.Type().Field(i)
 		tag := field.Tag.Get(tagName)
 		value := os.Getenv(tag)
+
+        if value == "" && config.Force {
+            return fmt.Errorf("missing value for %s", field.Name)
+        }
+
 		switch field.Type.Kind() {
 		case reflect.Bool:
 			v, _ := strconv.ParseBool(value)
@@ -41,9 +46,7 @@ func Load[T any](target *T, config Config) (err error) {
 			return fmt.Errorf("env: type \"%s\" not supported", field.Type.Kind())
 		}
 
-		if value == "" && config.Force {
-			return fmt.Errorf("missing value for %s", field.Name)
-		}
+
 	}
 	return
 }

@@ -1,1 +1,4 @@
 .idea
+.fleet
+vendor
+coverage.out
