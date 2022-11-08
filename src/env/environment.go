@@ -26,17 +26,27 @@ func Load[T any](target *T, config Config) (err error) {
 		tag := field.Tag.Get(tagName)
 		value := os.Getenv(tag)
 
-        if value == "" && config.Force {
-            return fmt.Errorf("missing value for %s", field.Name)
-        }
+		if value == "" && config.Force {
+			return fmt.Errorf("missing value for %s", field.Name)
+		}
 
-		switch field.Type.Kind() {
+		fieldType := field.Type.Kind()
+		switch fieldType {
 		case reflect.Bool:
 			v, _ := strconv.ParseBool(value)
 			tp.Elem().FieldByName(field.Name).SetBool(v)
 		case reflect.Int:
 			v, _ := strconv.ParseInt(value, 10, 0)
 			tp.Elem().FieldByName(field.Name).SetInt(v)
+		case reflect.Uint:
+			v, _ := strconv.ParseUint(value, 10, 0)
+			tp.Elem().FieldByName(field.Name).SetUint(v)
+		case reflect.Int64:
+			v, _ := strconv.ParseInt(value, 10, 0)
+			tp.Elem().FieldByName(field.Name).SetInt(v)
+		case reflect.Uint64:
+			v, _ := strconv.ParseUint(value, 10, 0)
+			tp.Elem().FieldByName(field.Name).SetUint(v)
 		case reflect.Float64, reflect.Float32:
 			v, _ := strconv.ParseFloat(value, 0)
 			tp.Elem().FieldByName(field.Name).SetFloat(v)
@@ -45,8 +55,6 @@ func Load[T any](target *T, config Config) (err error) {
 		default:
 			return fmt.Errorf("env: type \"%s\" not supported", field.Type.Kind())
 		}
-
-
 	}
 	return
 }
