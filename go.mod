@@ -1,4 +1,4 @@
-module go-env
+module github.com/ricatt/go-env
 
 go 1.19
 
