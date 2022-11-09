@@ -3,17 +3,16 @@
 ## Introduction
 This is just a small hobby-package, inspired after many discussions of "how do we want to load configuration into the project".
 
-## Instructions
-
-
 ## Example
+.env
 ```env
 BASE_URL=http://example.com
 ```
+main.go
 ```go
 package main
 
-import "github.com/ricatt/go-env/env"
+import "github.com/ricatt/go-env/pkg/env"
 
 type Config struct {
     BaseURL string `env:"BASE_URL"`
