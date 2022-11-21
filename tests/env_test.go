@@ -18,8 +18,8 @@ type Env struct {
 
 	IsTrue bool `env:"IS_TRUE"`
 
-	MaxInt   int   `env:"MAX_INT"`
-	MaxUint  uint  `env:"MAX_UINT"`
+	MaxInt    int    `env:"MAX_INT"`
+	MaxUint   uint   `env:"MAX_UINT"`
 	MaxInt64  int64  `env:"MAX_INT_64"`
 	MaxUint64 uint64 `env:"MAX_UINT_64"`
 
@@ -49,6 +49,15 @@ func (suite *EnvironmentTestSuite) TestAddValue() {
 	suite.Equal("env", config.PackageName)
 	suite.Equal("debug", config.LogLevel)
 	suite.Equal(10, config.Iterations)
+}
+
+func (suite *EnvironmentTestSuite) TestMissingValueForce() {
+	var config Env
+	err := env.Load(&config, env.Config{
+		Force: true,
+	})
+	suite.Error(err)
+	suite.Empty(config.BaseURL)
 }
 
 func (suite *EnvironmentTestSuite) TestOptionalEnvStruct() {
@@ -172,19 +181,15 @@ func (suite *EnvironmentTestSuite) TestTypeFloat() {
 }
 
 func (suite *EnvironmentTestSuite) TestTypeBool() {
-	os.Setenv("IS_TRUE", "true")
-
 	var config Env
+	os.Setenv("IS_TRUE", "true")
 	err := env.Load(&config, env.Config{})
 	suite.NoError(err)
-
 	suite.True(config.IsTrue)
 
-	os.Unsetenv("IS_TRUE")
-
+	err = os.Unsetenv("IS_TRUE")
 	err = env.Load(&config, env.Config{})
 	suite.NoError(err)
-
 	suite.False(config.IsTrue)
 }
 

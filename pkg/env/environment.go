@@ -29,14 +29,11 @@ func Load[T any](target *T, config Config) (err error) {
 	proxy := reflect.ValueOf(*target)
 	for i := 0; i < proxy.NumField(); i++ {
 		field := proxy.Type().Field(i)
-		tag := field.Tag.Get(tagName)
-		value := os.Getenv(tag)
-		if value == "" && !config.Force {
-			if config.Force {
-				return fmt.Errorf("missing value for %s", tag)
-			}
+		if isEqual(proxy.Field(i)) {
 			continue
 		}
+		tag := field.Tag.Get(tagName)
+		value := os.Getenv(tag)
 
 		fieldType := field.Type.Kind()
 		switch fieldType {
@@ -63,8 +60,23 @@ func Load[T any](target *T, config Config) (err error) {
 		default:
 			return fmt.Errorf("env: type \"%s\" not supported", field.Type.Kind())
 		}
+		if value == "" {
+			if config.Force {
+				return fmt.Errorf("missing value for %s", tag)
+			}
+			continue
+		}
 	}
 	return
+}
+
+func isEqual(field reflect.Value) bool {
+	if field.Kind() == reflect.Bool {
+		return false
+	}
+	currentValue := field.Interface()
+	zeroValue := reflect.Zero(field.Type()).Interface()
+	return currentValue != zeroValue
 }
 
 func parseEnvFile(path string) (err error) {
