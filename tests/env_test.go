@@ -42,23 +42,13 @@ type EnvironmentTestSuite struct {
 func (suite *EnvironmentTestSuite) TestAddValue() {
 	var config Env
 	err := env.Load(&config, env.Config{
-		EnvironmentFile: ".env",
+		EnvironmentFiles: []string{".env"},
 	})
 	suite.NoError(err)
 	suite.Empty(config.BaseURL)
 	suite.Equal("env", config.PackageName)
 	suite.Equal("debug", config.LogLevel)
 	suite.Equal(10, config.Iterations)
-}
-
-func (suite *EnvironmentTestSuite) TestMissingEnvInFile() {
-	var config Env
-	err := env.Load(&config, env.Config{
-		Force:           true,
-		EnvironmentFile: ".env",
-	})
-	suite.Error(err)
-	suite.Equal("missing value for BaseURL", err.Error())
 }
 
 func (suite *EnvironmentTestSuite) TestOptionalEnvStruct() {
@@ -68,11 +58,11 @@ func (suite *EnvironmentTestSuite) TestOptionalEnvStruct() {
 		err         error
 	)
 	err = env.Load(&config, env.Config{
-		EnvironmentFile: ".env",
+		EnvironmentFiles: []string{".env"},
 	})
 	suite.NoError(err)
 	err = env.Load(&envOptional, env.Config{
-		EnvironmentFile: ".env",
+		EnvironmentFiles: []string{".env"},
 	})
 	suite.NoError(err)
 }
@@ -83,22 +73,39 @@ func (suite *EnvironmentTestSuite) TestInvalidTypeEnvStruct() {
 		err    error
 	)
 	err = env.Load(&config, env.Config{
-		EnvironmentFile: ".env",
+		EnvironmentFiles: []string{".env"},
 	})
 	suite.Error(err)
 	suite.Equal("env: type \"interface\" not supported", err.Error())
 }
 
-func (suite *EnvironmentTestSuite) TestInvalidPath() {
+func (suite *EnvironmentTestSuite) TestErrorInvalidPath() {
 	var (
-		config EnvInvalidType
-		err    error
+		config  EnvInvalidType
+		err     error
+		envFile = ".env-invalid-path"
 	)
 	err = env.Load(&config, env.Config{
-		EnvironmentFile: ".env-invalid-path",
+		EnvironmentFiles:   []string{envFile},
+		ErrorOnMissingFile: true,
 	})
 	suite.Error(err)
-	suite.Equal("open .env-invalid-path: no such file or directory", err.Error())
+	suite.Equal(fmt.Sprintf("open %s: no such file or directory", envFile), err.Error())
+}
+
+func (suite *EnvironmentTestSuite) TestSuccessInvalidPath() {
+	var (
+		config  Env
+		err     error
+		envFile = ".env-invalid-path"
+	)
+	_ = os.Setenv("MESSAGE", "TestSuccessInvalidPath")
+	err = env.Load(&config, env.Config{
+		EnvironmentFiles: []string{envFile},
+	})
+	suite.NoError(err)
+	suite.Equal("TestSuccessInvalidPath", config.Message)
+	_ = os.Unsetenv("MESSAGE")
 }
 
 func (suite *EnvironmentTestSuite) TestNoEnvFile() {
@@ -111,6 +118,21 @@ func (suite *EnvironmentTestSuite) TestNoEnvFile() {
 	err = env.Load(&config, env.Config{})
 	suite.NoError(err)
 	suite.Equal("Hello World", config.Message)
+	err = os.Unsetenv("MESSAGE")
+	suite.NoError(err)
+}
+
+func (suite *EnvironmentTestSuite) TestWithDefault() {
+	var (
+		config Env
+		err    error
+	)
+
+	config.BaseURL = "http://localhost:8080"
+
+	err = env.Load(&config, env.Config{})
+	suite.NoError(err)
+	suite.Equal("http://localhost:8080", config.BaseURL)
 }
 
 func (suite *EnvironmentTestSuite) TestTypeInt() {

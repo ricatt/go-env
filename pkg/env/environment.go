@@ -12,22 +12,30 @@ import (
 const tagName = "env"
 
 func Load[T any](target *T, config Config) (err error) {
-	if config.EnvironmentFile != "" {
-		err = parseEnvFile(config.EnvironmentFile)
+	for _, path := range config.EnvironmentFiles {
+		err = parseEnvFile(path)
 		if err != nil {
+			if e, ok := err.(*os.PathError); ok {
+				if config.ErrorOnMissingFile {
+					return e
+				}
+				err = nil
+				continue
+			}
 			return err
 		}
 	}
-
 	tp := reflect.ValueOf(target)
 	proxy := reflect.ValueOf(*target)
 	for i := 0; i < proxy.NumField(); i++ {
 		field := proxy.Type().Field(i)
 		tag := field.Tag.Get(tagName)
 		value := os.Getenv(tag)
-
-		if value == "" && config.Force {
-			return fmt.Errorf("missing value for %s", field.Name)
+		if value == "" && !config.Force {
+			if config.Force {
+				return fmt.Errorf("missing value for %s", tag)
+			}
+			continue
 		}
 
 		fieldType := field.Type.Kind()
