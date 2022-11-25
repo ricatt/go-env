@@ -35,6 +35,11 @@ type EnvInvalidType struct {
 	InvalidType any `env:"INVALID_TYPE"`
 }
 
+type EnvWithDefault struct {
+    HasDefault string `env:"HAS_DEFAULT" default:"Hello, World!"`
+    NotOverwritten string `env:"NOT_OVERWRITTEN" default:"Dolor sit amet"`
+}
+
 type EnvironmentTestSuite struct {
 	suite.Suite
 }
@@ -187,10 +192,31 @@ func (suite *EnvironmentTestSuite) TestTypeBool() {
 	suite.NoError(err)
 	suite.True(config.IsTrue)
 
-	err = os.Unsetenv("IS_TRUE")
+    os.Setenv("IS_TRUE", "false")
+    suite.NoError(err)
 	err = env.Load(&config, env.Config{})
 	suite.NoError(err)
 	suite.False(config.IsTrue)
+}
+
+func (suite *EnvironmentTestSuite) TestDefaultValue() {
+    var config EnvWithDefault
+    err := env.Load(&config, env.Config{
+        Force: true,
+    })
+    suite.NoError(err)
+    suite.Equal("Hello, World!", config.HasDefault)
+}
+
+func (suite *EnvironmentTestSuite) TestDefaultNotOverwitten() {
+    os.Setenv("NOT_OVERWRITTEN", "Lorem ipsum")
+    var config EnvWithDefault
+    err := env.Load(&config, env.Config{
+        Force: true,
+    })
+    suite.NoError(err)
+    suite.Equal("Lorem ipsum", config.NotOverwritten)
+    os.Unsetenv("NOT_OVERWRITTEN")
 }
 
 func TestEnvironmentTestSuite(t *testing.T) {
