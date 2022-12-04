@@ -26,6 +26,15 @@ type Env struct {
 	MaxFloat float64 `env:"MAX_FLOAT"`
 }
 
+type MultiLevelEnv struct {
+    Host string `env:"HOST"`
+    ExternalService struct {
+        Host string `env:"EXTERNAL_SERVICE_HOST"`
+        Username string `env:"EXTERNAL_SERVICE_USERNAME"`
+        Password string `env:"EXTERNAL_SERVICE_PASSWORD"`
+    }
+}
+
 type EnvOptional struct {
 	PackageName string `env:"PACKAGE_NAME"`
 	BaseURL     string `env:"BASE_URL"`
@@ -217,6 +226,18 @@ func (suite *EnvironmentTestSuite) TestDefaultNotOverwitten() {
     suite.NoError(err)
     suite.Equal("Lorem ipsum", config.NotOverwritten)
     os.Unsetenv("NOT_OVERWRITTEN")
+}
+
+func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
+    var config MultiLevelEnv
+    err := env.Load(&config, env.Config{
+        EnvironmentFiles: []string{".env"},
+    })
+    suite.NoError(err)
+    suite.Equal("http://localhost", config.Host)
+    suite.Equal("http://example.com", config.ExternalService.Host)
+    suite.Equal("username", config.ExternalService.Username)
+    suite.Equal("password", config.ExternalService.Password)
 }
 
 func TestEnvironmentTestSuite(t *testing.T) {
