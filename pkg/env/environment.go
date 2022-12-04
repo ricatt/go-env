@@ -58,7 +58,7 @@ func parse(v reflect.Value, config Config) (reflect.Value, error) {
                             }
                             continue
                         }
-                field, err = setData(field, el.Type().Field(i), value)
+                field, err = setData(field, value)
                 if err != nil {
                     return el, err
                 }
@@ -78,7 +78,7 @@ func isEqual(field reflect.Value) bool {
     return currentValue != zeroValue
 }
 
-func setData(target reflect.Value, field reflect.StructField, value string) (reflect.Value, error) {
+func setData(target reflect.Value, value string) (reflect.Value, error) {
     switch target.Type().Kind() {
 	case reflect.Bool:
 		v, _ := strconv.ParseBool(value)
