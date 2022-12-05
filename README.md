@@ -1,9 +1,26 @@
 # go-env
 
-## Introduction
+## About the project
 This is just a small hobby-package, inspired after many discussions of "how do we want to load configuration into the project".
 
-## Example
+## How to use
+### Supported types
+ - String
+ - Boolean
+ - Int
+ - Uint
+ - Int64
+ - Uint64
+ - Float
+### Configs
+`Force`: `bool` Forces a value to exist, will throw error if it comes up empty.
+
+`EnvironmentFiles`: `[]string{}` A list of files where you wish to fetch your environment from.
+
+`ErrorOnMissingFile`: `bool` Will throw error if any of the provided files are missing.
+
+
+### Example
 .env
 ```env
 BASE_URL=http://example.com
