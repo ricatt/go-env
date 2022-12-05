@@ -14,8 +14,11 @@ This is just a small hobby-package, inspired after many discussions of "how do w
  - Float
 ### Configs
 `Force`: `bool` Forces a value to exist, will throw error if it comes up empty.
+
 `EnvironmentFiles`: `[]string{}` A list of files where you wish to fetch your environment from.
+
 `ErrorOnMissingFile`: `bool` Will throw error if any of the provided files are missing.
+
 
 ### Example
 .env
