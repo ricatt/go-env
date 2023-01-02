@@ -27,12 +27,12 @@ type Env struct {
 }
 
 type MultiLevelEnv struct {
-    Host string `env:"HOST"`
-    ExternalService struct {
-        Host string `env:"EXTERNAL_SERVICE_HOST"`
-        Username string `env:"EXTERNAL_SERVICE_USERNAME"`
-        Password string `env:"EXTERNAL_SERVICE_PASSWORD"`
-    }
+	Host            string `env:"HOST"`
+	ExternalService struct {
+		Host     string `env:"EXTERNAL_SERVICE_HOST"`
+		Username string `env:"EXTERNAL_SERVICE_USERNAME"`
+		Password string `env:"EXTERNAL_SERVICE_PASSWORD"`
+	}
 }
 
 type EnvOptional struct {
@@ -45,8 +45,8 @@ type EnvInvalidType struct {
 }
 
 type EnvWithDefault struct {
-    HasDefault string `env:"HAS_DEFAULT" default:"Hello, World!"`
-    NotOverwritten string `env:"NOT_OVERWRITTEN" default:"Dolor sit amet"`
+	HasDefault     string `env:"HAS_DEFAULT" default:"Hello, World!"`
+	NotOverwritten string `env:"NOT_OVERWRITTEN" default:"Dolor sit amet"`
 }
 
 type EnvironmentTestSuite struct {
@@ -55,7 +55,7 @@ type EnvironmentTestSuite struct {
 
 func (suite *EnvironmentTestSuite) TestAddValue() {
 	var config Env
-	err := env.Load(&config, env.Config{
+	err := env.Load(&config, env.Attributes{
 		EnvironmentFiles: []string{".env"},
 	})
 	suite.NoError(err)
@@ -67,7 +67,7 @@ func (suite *EnvironmentTestSuite) TestAddValue() {
 
 func (suite *EnvironmentTestSuite) TestMissingValueForce() {
 	var config Env
-	err := env.Load(&config, env.Config{
+	err := env.Load(&config, env.Attributes{
 		Force: true,
 	})
 	suite.Error(err)
@@ -80,11 +80,11 @@ func (suite *EnvironmentTestSuite) TestOptionalEnvStruct() {
 		envOptional EnvOptional
 		err         error
 	)
-	err = env.Load(&config, env.Config{
+	err = env.Load(&config, env.Attributes{
 		EnvironmentFiles: []string{".env"},
 	})
 	suite.NoError(err)
-	err = env.Load(&envOptional, env.Config{
+	err = env.Load(&envOptional, env.Attributes{
 		EnvironmentFiles: []string{".env"},
 	})
 	suite.NoError(err)
@@ -95,7 +95,7 @@ func (suite *EnvironmentTestSuite) TestInvalidTypeEnvStruct() {
 		config EnvInvalidType
 		err    error
 	)
-	err = env.Load(&config, env.Config{
+	err = env.Load(&config, env.Attributes{
 		EnvironmentFiles: []string{".env"},
 	})
 	suite.Error(err)
@@ -108,7 +108,7 @@ func (suite *EnvironmentTestSuite) TestErrorInvalidPath() {
 		err     error
 		envFile = ".env-invalid-path"
 	)
-	err = env.Load(&config, env.Config{
+	err = env.Load(&config, env.Attributes{
 		EnvironmentFiles:   []string{envFile},
 		ErrorOnMissingFile: true,
 	})
@@ -123,7 +123,7 @@ func (suite *EnvironmentTestSuite) TestSuccessInvalidPath() {
 		envFile = ".env-invalid-path"
 	)
 	_ = os.Setenv("MESSAGE", "TestSuccessInvalidPath")
-	err = env.Load(&config, env.Config{
+	err = env.Load(&config, env.Attributes{
 		EnvironmentFiles: []string{envFile},
 	})
 	suite.NoError(err)
@@ -138,7 +138,7 @@ func (suite *EnvironmentTestSuite) TestNoEnvFile() {
 	)
 	err = os.Setenv("MESSAGE", "Hello World")
 	suite.NoError(err)
-	err = env.Load(&config, env.Config{})
+	err = env.Load(&config, env.Attributes{})
 	suite.NoError(err)
 	suite.Equal("Hello World", config.Message)
 	err = os.Unsetenv("MESSAGE")
@@ -153,7 +153,7 @@ func (suite *EnvironmentTestSuite) TestWithDefault() {
 
 	config.BaseURL = "http://localhost:8080"
 
-	err = env.Load(&config, env.Config{})
+	err = env.Load(&config, env.Attributes{})
 	suite.NoError(err)
 	suite.Equal("http://localhost:8080", config.BaseURL)
 }
@@ -165,7 +165,7 @@ func (suite *EnvironmentTestSuite) TestTypeInt() {
 	os.Setenv("MAX_UINT_64", "18446744073709551615")
 
 	var config Env
-	err := env.Load(&config, env.Config{})
+	err := env.Load(&config, env.Attributes{})
 	suite.NoError(err)
 	suite.Equal(math.MaxInt, config.MaxInt)
 	if math.MaxUint != config.MaxUint {
@@ -186,7 +186,7 @@ func (suite *EnvironmentTestSuite) TestTypeFloat() {
 	os.Setenv("MAX_FLOAT", fmt.Sprint(math.MaxFloat64))
 
 	var config Env
-	err := env.Load(&config, env.Config{})
+	err := env.Load(&config, env.Attributes{})
 	suite.NoError(err)
 
 	suite.Equal(math.MaxFloat64, config.MaxFloat)
@@ -197,47 +197,47 @@ func (suite *EnvironmentTestSuite) TestTypeFloat() {
 func (suite *EnvironmentTestSuite) TestTypeBool() {
 	var config Env
 	os.Setenv("IS_TRUE", "true")
-	err := env.Load(&config, env.Config{})
+	err := env.Load(&config, env.Attributes{})
 	suite.NoError(err)
 	suite.True(config.IsTrue)
 
-    os.Setenv("IS_TRUE", "false")
-    suite.NoError(err)
-	err = env.Load(&config, env.Config{})
+	os.Setenv("IS_TRUE", "false")
+	suite.NoError(err)
+	err = env.Load(&config, env.Attributes{})
 	suite.NoError(err)
 	suite.False(config.IsTrue)
 }
 
 func (suite *EnvironmentTestSuite) TestDefaultValue() {
-    var config EnvWithDefault
-    err := env.Load(&config, env.Config{
-        Force: true,
-    })
-    suite.NoError(err)
-    suite.Equal("Hello, World!", config.HasDefault)
+	var config EnvWithDefault
+	err := env.Load(&config, env.Attributes{
+		Force: true,
+	})
+	suite.NoError(err)
+	suite.Equal("Hello, World!", config.HasDefault)
 }
 
 func (suite *EnvironmentTestSuite) TestDefaultNotOverwitten() {
-    os.Setenv("NOT_OVERWRITTEN", "Lorem ipsum")
-    var config EnvWithDefault
-    err := env.Load(&config, env.Config{
-        Force: true,
-    })
-    suite.NoError(err)
-    suite.Equal("Lorem ipsum", config.NotOverwritten)
-    os.Unsetenv("NOT_OVERWRITTEN")
+	os.Setenv("NOT_OVERWRITTEN", "Lorem ipsum")
+	var config EnvWithDefault
+	err := env.Load(&config, env.Attributes{
+		Force: true,
+	})
+	suite.NoError(err)
+	suite.Equal("Lorem ipsum", config.NotOverwritten)
+	os.Unsetenv("NOT_OVERWRITTEN")
 }
 
 func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
-    var config MultiLevelEnv
-    err := env.Load(&config, env.Config{
-        EnvironmentFiles: []string{".env"},
-    })
-    suite.NoError(err)
-    suite.Equal("http://localhost", config.Host)
-    suite.Equal("http://example.com", config.ExternalService.Host)
-    suite.Equal("username", config.ExternalService.Username)
-    suite.Equal("password", config.ExternalService.Password)
+	var config MultiLevelEnv
+	err := env.Load(&config, env.Attributes{
+		EnvironmentFiles: []string{".env"},
+	})
+	suite.NoError(err)
+	suite.Equal("http://localhost", config.Host)
+	suite.Equal("http://example.com", config.ExternalService.Host)
+	suite.Equal("username", config.ExternalService.Username)
+	suite.Equal("password", config.ExternalService.Password)
 }
 
 func TestEnvironmentTestSuite(t *testing.T) {
