@@ -2,7 +2,7 @@ package tests
 
 import (
 	"fmt"
-	"github.com/ricatt/go-env/env"
+	"github.com/ricatt/go-env"
 	"github.com/stretchr/testify/suite"
 	"math"
 	"os"
