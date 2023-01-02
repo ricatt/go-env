@@ -12,7 +12,7 @@ This is just a small hobby-package, inspired after many discussions of "how do w
  - Int64
  - Uint64
  - Float
-### Configs
+### Attributes
 `Force`: `bool` Forces a value to exist, will throw error if it comes up empty.
 
 `EnvironmentFiles`: `[]string{}` A list of files where you wish to fetch your environment from.
@@ -29,7 +29,7 @@ main.go
 ```go
 package main
 
-import "github.com/ricatt/go-env/pkg/env"
+import "github.com/ricatt/go-env/env"
 
 type Config struct {
     BaseURL string `env:"BASE_URL"`
@@ -37,7 +37,7 @@ type Config struct {
 
 func main() {
     var config Config
-    env.Load(&config, env.Config{})
+    env.Load(&config, env.Attributes{})
     // todo: profit
 }
 ```
@@ -55,7 +55,7 @@ main.go
 ```go
 package main
 
-import "github.com/ricatt/go-env/pkg/env"
+import "github.com/ricatt/go-env/env"
 
 type Config struct {
     ServiceName string `env:"NAME_URL"`
@@ -68,7 +68,7 @@ type Config struct {
 
 func main() {
     var config Config
-    env.Load(&config, env.Config{})
+    env.Load(&config, env.Attributes{})
     // todo: profit
 }
 ```
