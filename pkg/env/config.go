@@ -1,6 +1,6 @@
 package env
 
-type Config struct {
+type Attributes struct {
 	Force              bool
 	EnvironmentFiles   []string
 	ErrorOnMissingFile bool
