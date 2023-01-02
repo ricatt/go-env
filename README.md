@@ -29,7 +29,7 @@ main.go
 ```go
 package main
 
-import "github.com/ricatt/go-env/env"
+import "github.com/ricatt/go-env"
 
 type Config struct {
     BaseURL string `env:"BASE_URL"`
@@ -55,7 +55,7 @@ main.go
 ```go
 package main
 
-import "github.com/ricatt/go-env/env"
+import "github.com/ricatt/go-env"
 
 type Config struct {
     ServiceName string `env:"NAME_URL"`
