@@ -139,9 +139,7 @@ func parseEnvFile(path string) (err error) {
 		if len(line) == 0 {
 			continue
 		}
-		if len(line) == 2 {
-			val = line[1]
-		}
+		val = strings.Join(line[1:], "=")
 		if len(val) == 0 {
 			continue
 		}
