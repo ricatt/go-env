@@ -12,6 +12,7 @@ import (
 const (
 	tagDefaultValue = "default"
 	tagName         = "env"
+	tagForceValue   = "force-value"
 )
 
 // Load The primary function to load the environment into the struct.
@@ -43,6 +44,7 @@ func parse(v reflect.Value, config Attributes) (reflect.Value, error) {
 		for i := 0; i < numField; i++ {
 			field := el.Field(i)
 			tag := el.Type().Field(i).Tag.Get(tagName)
+			forceValue := el.Type().Field(i).Tag.Get(tagForceValue)
 			if isEqual(field) {
 				continue
 			}
@@ -55,7 +57,7 @@ func parse(v reflect.Value, config Attributes) (reflect.Value, error) {
 			} else {
 				value := getValue(el.Type().Field(i))
 				if value == "" {
-					if config.Force {
+                    if config.Force || forceValue == "true" {
 						return el, fmt.Errorf("missing value for %s", tag)
 					}
 					continue

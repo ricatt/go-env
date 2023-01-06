@@ -49,6 +49,10 @@ type EnvWithDefault struct {
 	NotOverwritten string `env:"NOT_OVERWRITTEN" default:"Dolor sit amet"`
 }
 
+type EnvForceValue struct {
+    ThisIsForced string `env:"THIS_IS_FORCED" force-value:"true"`
+}
+
 type EnvironmentTestSuite struct {
 	suite.Suite
 }
@@ -238,6 +242,18 @@ func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
 	suite.Equal("http://example.com", config.ExternalService.Host)
 	suite.Equal("username", config.ExternalService.Username)
 	suite.Equal("password", config.ExternalService.Password)
+}
+
+func (suite *EnvironmentTestSuite) TestForceIndivdualError() {
+    var config EnvForceValue
+    err := env.Load(&config, env.Attributes{
+        EnvironmentFiles: []string{".env"},
+    })
+    suite.Error(err)
+
+    config.ThisIsForced = "lorem ipsum"
+    err = env.Load(&config, env.Attributes{})
+    suite.NoError(err)
 }
 
 func TestEnvironmentTestSuite(t *testing.T) {
