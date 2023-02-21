@@ -50,7 +50,8 @@ type EnvWithDefault struct {
 }
 
 type EnvForceValue struct {
-    ThisIsForced string `env:"THIS_IS_FORCED" force-value:"true"`
+    ThisIsForced string `env:"FORCED_VALUE" force-value:"true"`
+    ThisIsAlsoForced string `env:"FORCED_VALUE" force-env:"true"`
 }
 
 type EnvironmentTestSuite struct {
@@ -247,12 +248,13 @@ func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
 func (suite *EnvironmentTestSuite) TestForceIndivdualError() {
     var config EnvForceValue
     err := env.Load(&config, env.Attributes{
-        EnvironmentFiles: []string{".env"},
+        EnvironmentFiles: []string{"faulty.env"},
     })
     suite.Error(err)
 
-    config.ThisIsForced = "lorem ipsum"
-    err = env.Load(&config, env.Attributes{})
+    err = env.Load(&config, env.Attributes{
+        EnvironmentFiles: []string{".env"},
+    })
     suite.NoError(err)
 }
 
