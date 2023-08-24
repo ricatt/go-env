@@ -24,6 +24,8 @@ type Env struct {
 	MaxUint64 uint64 `env:"MAX_UINT_64"`
 
 	MaxFloat float64 `env:"MAX_FLOAT"`
+
+	StringSlice []string `env:"STRING_SLICE"`
 }
 
 type MultiLevelEnv struct {
@@ -50,8 +52,8 @@ type EnvWithDefault struct {
 }
 
 type EnvForceValue struct {
-    ThisIsForced string `env:"FORCED_VALUE" force-value:"true"`
-    ThisIsAlsoForced string `env:"FORCED_VALUE" force-env:"true"`
+	ThisIsForced     string `env:"FORCED_VALUE" force-value:"true"`
+	ThisIsAlsoForced string `env:"FORCED_VALUE" force-env:"true"`
 }
 
 type EnvironmentTestSuite struct {
@@ -68,6 +70,7 @@ func (suite *EnvironmentTestSuite) TestAddValue() {
 	suite.Equal("env", config.PackageName)
 	suite.Equal("debug", config.LogLevel)
 	suite.Equal(10, config.Iterations)
+	suite.Equal([]string{"string1", "string2", "string3"}, config.StringSlice)
 }
 
 func (suite *EnvironmentTestSuite) TestMissingValueForce() {
@@ -246,16 +249,52 @@ func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
 }
 
 func (suite *EnvironmentTestSuite) TestForceIndivdualError() {
-    var config EnvForceValue
-    err := env.Load(&config, env.Attributes{
-        EnvironmentFiles: []string{"faulty.env"},
-    })
-    suite.Error(err)
+	var config EnvForceValue
+	err := env.Load(&config, env.Attributes{
+		EnvironmentFiles: []string{"faulty.env"},
+	})
+	suite.Error(err)
 
-    err = env.Load(&config, env.Attributes{
-        EnvironmentFiles: []string{".env"},
-    })
-    suite.NoError(err)
+	err = env.Load(&config, env.Attributes{
+		EnvironmentFiles: []string{".env"},
+	})
+	suite.NoError(err)
+}
+
+func (suite *EnvironmentTestSuite) TestSlices() {
+	var config struct {
+		Int    []int    `env:"INT"`
+		String []string `env:"STRING"`
+		Bool   []bool   `env:"BOOL"`
+	}
+	os.Setenv("INT", "1,2,3")
+	os.Setenv("STRING", "str1,str2,str3")
+	os.Setenv("BOOL", "true,false,true")
+
+	err := env.Load(&config, env.Attributes{})
+	suite.NoError(err)
+
+	suite.Equal([]int{1, 2, 3}, config.Int)
+	suite.Equal([]string{"str1", "str2", "str3"}, config.String)
+	suite.Equal([]bool{true, false, true}, config.Bool)
+}
+
+func (suite *EnvironmentTestSuite) TestSlicesFormatError() {
+	var config struct {
+		Int    []int    `env:"INT"`
+		String []string `env:"STRING"`
+		Bool   []bool   `env:"BOOL"`
+	}
+	os.Setenv("INT", "1,2,3,")
+	os.Setenv("STRING", "str1,str2,,str3")
+	os.Setenv("BOOL", ",true,false,true")
+
+	err := env.Load(&config, env.Attributes{})
+	suite.NoError(err)
+
+	suite.Equal([]int{1, 2, 3, 0}, config.Int)
+	suite.Equal([]string{"str1", "str2", "", "str3"}, config.String)
+	suite.Equal([]bool{false, true, false, true}, config.Bool)
 }
 
 func TestEnvironmentTestSuite(t *testing.T) {

@@ -13,12 +13,12 @@ const (
 	tagDefaultValue = "default"
 	tagName         = "env"
 	tagForceValue   = "force-value" //deprecated
-    tagForceEnv = "force-env"
+	tagForceEnv     = "force-env"
 )
 
 // Load The primary function to load the environment into the struct.
 func Load[T any](target *T, attr Attributes) (err error) {
-    var values map[string]string
+	var values map[string]string
 	for _, path := range attr.EnvironmentFiles {
 		values, err = parseEnvFile(path)
 		if err != nil {
@@ -33,7 +33,7 @@ func Load[T any](target *T, attr Attributes) (err error) {
 		}
 	}
 	v := reflect.ValueOf(target)
-    v, err = parse(v, attr, values)
+	v, err = parse(v, attr, values)
 	return
 }
 
@@ -46,7 +46,7 @@ func parse(v reflect.Value, config Attributes, values map[string]string) (reflec
 		for i := 0; i < numField; i++ {
 			field := el.Field(i)
 			tag := el.Type().Field(i).Tag.Get(tagName)
-            forcedEnv := isForced(el.Type().Field(i))
+			forcedEnv := isForced(el.Type().Field(i))
 			if isEqual(field) {
 				continue
 			}
@@ -59,7 +59,7 @@ func parse(v reflect.Value, config Attributes, values map[string]string) (reflec
 			} else {
 				value := getValue(el.Type().Field(i), values)
 				if value == "" {
-                    if config.Force || forcedEnv {
+					if config.Force || forcedEnv {
 						return el, fmt.Errorf("missing value for %s", tag)
 					}
 					continue
@@ -76,15 +76,15 @@ func parse(v reflect.Value, config Attributes, values map[string]string) (reflec
 }
 
 func isForced(field reflect.StructField) bool {
-    val1 := field.Tag.Get(tagForceValue)
-    val2 := field.Tag.Get(tagForceEnv)
-    if val1 == "true" {
-        return true
-    }
-    if val2 == "true" {
-        return true
-    }
-    return false
+	val1 := field.Tag.Get(tagForceValue)
+	val2 := field.Tag.Get(tagForceEnv)
+	if val1 == "true" {
+		return true
+	}
+	if val2 == "true" {
+		return true
+	}
+	return false
 }
 
 // isEqual A small function to make sure we aren't overwriting any entries already provided before the struct
@@ -95,12 +95,21 @@ func isEqual(field reflect.Value) bool {
 	}
 	currentValue := field.Interface()
 	zeroValue := reflect.Zero(field.Type()).Interface()
-	return currentValue != zeroValue
+	return !reflect.DeepEqual(currentValue, zeroValue)
 }
 
 // setData Will cast the value into the correct type and set it for the field.
 func setData(target reflect.Value, value string) (reflect.Value, error) {
 	switch target.Type().Kind() {
+	case reflect.Slice:
+		values := strings.Split(value, ",")
+		s := reflect.New(target.Type())
+		for _, v := range values {
+			newField := reflect.New(target.Type().Elem())
+			converted, _ := setData(newField.Elem(), v)
+			s.Elem().Set(reflect.Append(s.Elem(), converted))
+		}
+		target.Set(s.Elem())
 	case reflect.Bool:
 		v, _ := strconv.ParseBool(value)
 		target.SetBool(v)
@@ -121,6 +130,7 @@ func setData(target reflect.Value, value string) (reflect.Value, error) {
 		target.SetFloat(v)
 	case reflect.String:
 		target.SetString(value)
+
 	default:
 		return target, fmt.Errorf("env: type \"%s\" not supported", target.Kind())
 	}
@@ -131,10 +141,10 @@ func setData(target reflect.Value, value string) (reflect.Value, error) {
 // Default value will only be set if value is empty.
 func getValue(field reflect.StructField, values map[string]string) (value string) {
 	tag := field.Tag.Get(tagName)
-    value = os.Getenv(tag)
-    if value == "" {
-	   value = values[tag]
-    }
+	value = os.Getenv(tag)
+	if value == "" {
+		value = values[tag]
+	}
 	defaultValue := field.Tag.Get(tagDefaultValue)
 	if value == "" {
 		value = defaultValue
@@ -145,10 +155,10 @@ func getValue(field reflect.StructField, values map[string]string) (value string
 // parseEnvFile Will fetch all entries from provded file and set it in the environment.
 func parseEnvFile(path string) (map[string]string, error) {
 	var (
-        err error
-        file *os.File
-        values = make(map[string]string)
-    )
+		err    error
+		file   *os.File
+		values = make(map[string]string)
+	)
 	file, err = os.Open(path)
 	if err != nil {
 		return values, err
@@ -165,7 +175,7 @@ func parseEnvFile(path string) (map[string]string, error) {
 		if len(val) == 0 {
 			continue
 		}
-        values[line[0]] = val
+		values[line[0]] = val
 	}
-    return values, scanner.Err()
+	return values, scanner.Err()
 }
