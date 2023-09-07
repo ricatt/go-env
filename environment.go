@@ -166,16 +166,12 @@ func parseEnvFile(path string) (map[string]string, error) {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		var val string
-		line := strings.Split(scanner.Text(), "=")
-		if len(line) == 0 {
+		line := strings.SplitN(scanner.Text(), "=", 2)
+		// Continue if we get a key without value.
+		if len(line) <= 1 || len(line[1]) == 0 {
 			continue
 		}
-		val = strings.Join(line[1:], "=")
-		if len(val) == 0 {
-			continue
-		}
-		values[line[0]] = val
+		values[line[0]] = line[1]
 	}
 	return values, scanner.Err()
 }
