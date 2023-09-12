@@ -62,9 +62,8 @@ type EnvironmentTestSuite struct {
 
 func (suite *EnvironmentTestSuite) TestAddValue() {
 	var config Env
-	err := env.Load(&config, env.Attributes{
-		EnvironmentFiles: []string{".env"},
-	})
+	err := env.Load(&config, env.EnvironmentFiles(".env"))
+
 	suite.NoError(err)
 	suite.Empty(config.BaseURL)
 	suite.Equal("env", config.PackageName)
@@ -75,9 +74,7 @@ func (suite *EnvironmentTestSuite) TestAddValue() {
 
 func (suite *EnvironmentTestSuite) TestMissingValueForce() {
 	var config Env
-	err := env.Load(&config, env.Attributes{
-		Force: true,
-	})
+	err := env.Load(&config, env.Force(true))
 	suite.Error(err)
 	suite.Empty(config.BaseURL)
 }
@@ -88,13 +85,9 @@ func (suite *EnvironmentTestSuite) TestOptionalEnvStruct() {
 		envOptional EnvOptional
 		err         error
 	)
-	err = env.Load(&config, env.Attributes{
-		EnvironmentFiles: []string{".env"},
-	})
+	err = env.Load(&config, env.EnvironmentFiles(".env"))
 	suite.NoError(err)
-	err = env.Load(&envOptional, env.Attributes{
-		EnvironmentFiles: []string{".env"},
-	})
+	err = env.Load(&envOptional, env.EnvironmentFiles(".env"))
 	suite.NoError(err)
 }
 
@@ -103,9 +96,7 @@ func (suite *EnvironmentTestSuite) TestInvalidTypeEnvStruct() {
 		config EnvInvalidType
 		err    error
 	)
-	err = env.Load(&config, env.Attributes{
-		EnvironmentFiles: []string{".env"},
-	})
+	err = env.Load(&config, env.EnvironmentFiles(".env"))
 	suite.Error(err)
 	suite.Equal("env: type \"interface\" not supported", err.Error())
 }
@@ -116,10 +107,7 @@ func (suite *EnvironmentTestSuite) TestErrorInvalidPath() {
 		err     error
 		envFile = ".env-invalid-path"
 	)
-	err = env.Load(&config, env.Attributes{
-		EnvironmentFiles:   []string{envFile},
-		ErrorOnMissingFile: true,
-	})
+	err = env.Load(&config, env.EnvironmentFiles(envFile), env.ErrorOnMissingFile(true))
 	suite.Error(err)
 	suite.Equal(fmt.Sprintf("open %s: no such file or directory", envFile), err.Error())
 }
@@ -131,9 +119,7 @@ func (suite *EnvironmentTestSuite) TestSuccessInvalidPath() {
 		envFile = ".env-invalid-path"
 	)
 	_ = os.Setenv("MESSAGE", "TestSuccessInvalidPath")
-	err = env.Load(&config, env.Attributes{
-		EnvironmentFiles: []string{envFile},
-	})
+	err = env.Load(&config, env.EnvironmentFiles(envFile))
 	suite.NoError(err)
 	suite.Equal("TestSuccessInvalidPath", config.Message)
 	_ = os.Unsetenv("MESSAGE")
@@ -146,7 +132,7 @@ func (suite *EnvironmentTestSuite) TestNoEnvFile() {
 	)
 	err = os.Setenv("MESSAGE", "Hello World")
 	suite.NoError(err)
-	err = env.Load(&config, env.Attributes{})
+	err = env.Load(&config)
 	suite.NoError(err)
 	suite.Equal("Hello World", config.Message)
 	err = os.Unsetenv("MESSAGE")
@@ -161,7 +147,7 @@ func (suite *EnvironmentTestSuite) TestWithDefault() {
 
 	config.BaseURL = "http://localhost:8080"
 
-	err = env.Load(&config, env.Attributes{})
+	err = env.Load(&config)
 	suite.NoError(err)
 	suite.Equal("http://localhost:8080", config.BaseURL)
 }
@@ -173,7 +159,7 @@ func (suite *EnvironmentTestSuite) TestTypeInt() {
 	os.Setenv("MAX_UINT_64", "18446744073709551615")
 
 	var config Env
-	err := env.Load(&config, env.Attributes{})
+	err := env.Load(&config)
 	suite.NoError(err)
 	suite.Equal(math.MaxInt, config.MaxInt)
 	if math.MaxUint != config.MaxUint {
@@ -194,7 +180,7 @@ func (suite *EnvironmentTestSuite) TestTypeFloat() {
 	os.Setenv("MAX_FLOAT", fmt.Sprint(math.MaxFloat64))
 
 	var config Env
-	err := env.Load(&config, env.Attributes{})
+	err := env.Load(&config)
 	suite.NoError(err)
 
 	suite.Equal(math.MaxFloat64, config.MaxFloat)
@@ -205,22 +191,20 @@ func (suite *EnvironmentTestSuite) TestTypeFloat() {
 func (suite *EnvironmentTestSuite) TestTypeBool() {
 	var config Env
 	os.Setenv("IS_TRUE", "true")
-	err := env.Load(&config, env.Attributes{})
+	err := env.Load(&config)
 	suite.NoError(err)
 	suite.True(config.IsTrue)
 
 	os.Setenv("IS_TRUE", "false")
 	suite.NoError(err)
-	err = env.Load(&config, env.Attributes{})
+	err = env.Load(&config)
 	suite.NoError(err)
 	suite.False(config.IsTrue)
 }
 
 func (suite *EnvironmentTestSuite) TestDefaultValue() {
 	var config EnvWithDefault
-	err := env.Load(&config, env.Attributes{
-		Force: true,
-	})
+	err := env.Load(&config, env.Force(true))
 	suite.NoError(err)
 	suite.Equal("Hello, World!", config.HasDefault)
 }
@@ -228,9 +212,7 @@ func (suite *EnvironmentTestSuite) TestDefaultValue() {
 func (suite *EnvironmentTestSuite) TestDefaultNotOverwitten() {
 	os.Setenv("NOT_OVERWRITTEN", "Lorem ipsum")
 	var config EnvWithDefault
-	err := env.Load(&config, env.Attributes{
-		Force: true,
-	})
+	err := env.Load(&config, env.Force(true))
 	suite.NoError(err)
 	suite.Equal("Lorem ipsum", config.NotOverwritten)
 	os.Unsetenv("NOT_OVERWRITTEN")
@@ -238,9 +220,7 @@ func (suite *EnvironmentTestSuite) TestDefaultNotOverwitten() {
 
 func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
 	var config MultiLevelEnv
-	err := env.Load(&config, env.Attributes{
-		EnvironmentFiles: []string{".env"},
-	})
+	err := env.Load(&config, env.EnvironmentFiles(".env"))
 	suite.NoError(err)
 	suite.Equal("http://localhost", config.Host)
 	suite.Equal("http://example.com", config.ExternalService.Host)
@@ -250,14 +230,10 @@ func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
 
 func (suite *EnvironmentTestSuite) TestForceIndivdualError() {
 	var config EnvForceValue
-	err := env.Load(&config, env.Attributes{
-		EnvironmentFiles: []string{"faulty.env"},
-	})
+	err := env.Load(&config, env.EnvironmentFiles("faulty.env"))
 	suite.Error(err)
 
-	err = env.Load(&config, env.Attributes{
-		EnvironmentFiles: []string{".env"},
-	})
+	err = env.Load(&config, env.EnvironmentFiles(".env"))
 	suite.NoError(err)
 }
 
@@ -271,7 +247,7 @@ func (suite *EnvironmentTestSuite) TestSlices() {
 	os.Setenv("STRING", "str1,str2,str3")
 	os.Setenv("BOOL", "true,false,true")
 
-	err := env.Load(&config, env.Attributes{})
+	err := env.Load(&config)
 	suite.NoError(err)
 
 	suite.Equal([]int{1, 2, 3}, config.Int)
@@ -289,7 +265,7 @@ func (suite *EnvironmentTestSuite) TestSlicesFormatError() {
 	os.Setenv("STRING", "str1,str2,,str3")
 	os.Setenv("BOOL", ",true,false,true")
 
-	err := env.Load(&config, env.Attributes{})
+	err := env.Load(&config)
 	suite.NoError(err)
 
 	suite.Equal([]int{1, 2, 3, 0}, config.Int)
