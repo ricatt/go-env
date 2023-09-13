@@ -24,11 +24,27 @@ This is just a small hobby-package, inspired after many discussions of "how do w
  - Slices of the previously mentioned types.
 
 ### Attributes
-`Force`: `bool` Forces a value to exist, will throw error if it comes up empty.
+`Force`: `bool` Forces a value to exist, will throw error if it comes up empty. Default: `false`
 
 `EnvironmentFiles`: `[]string{}` A list of files where you wish to fetch your environment from.
 
-`ErrorOnMissingFile`: `bool` Will throw error if any of the provided files are missing.
+`ErrorOnMissingFile`: `bool` Will throw error if any of the provided files are missing. Default: `false`
+
+This attributes are functions which can be applied to the `Load`-function.
+```go
+package main
+
+import "github.com/ricatt/go-env"
+
+type Config struct {
+    BaseURL string `env:"BASE_URL"`
+}
+
+func main() {
+    var config Config
+    env.Load(&config, env.EnvironmentFiles(".env"), env.Force(true))
+}
+```
 
 
 ## Examples
@@ -50,7 +66,7 @@ type Config struct {
 
 func main() {
     var config Config
-    env.Load(&config, env.Attributes{})
+    env.Load(&config)
     // todo: profit
 }
 ```
@@ -87,7 +103,7 @@ type Config struct {
 
 func main() {
     var config Config
-    env.Load(&config, env.Attributes{})
+    env.Load(&config)
 	useExternalService(config.ExternalService)
 }
 
@@ -120,7 +136,7 @@ type Config struct {
 
 func main() {
     var config Config
-    env.Load(&config, env.Attributes{})
+    env.Load(&config)
     if slices.Contains(config.MatchInt, 42) {
 		fmt.Println("Found the meaning of life, the universe and everything.")
     } else {
