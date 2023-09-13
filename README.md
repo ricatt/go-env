@@ -18,6 +18,10 @@ This is just a small hobby-package, inspired after many discussions of "how do w
  - Boolean
  - Int
  - Uint
+ - Int8
+ - Uint8
+ - Int32
+ - Uint32
  - Int64
  - Uint64
  - Float

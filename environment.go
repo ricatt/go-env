@@ -81,12 +81,7 @@ func parse(v reflect.Value, config attributes, values map[string]string) (reflec
 }
 
 func isForced(field reflect.StructField) bool {
-	val1 := field.Tag.Get(tagForceValue)
-	val2 := field.Tag.Get(tagForceEnv)
-	if val1 == "true" {
-		return true
-	}
-	if val2 == "true" {
+	if field.Tag.Get(tagForceValue) == "true" || field.Tag.Get(tagForceEnv) == "true" {
 		return true
 	}
 	return false
@@ -123,6 +118,18 @@ func setData(target reflect.Value, value string) (reflect.Value, error) {
 		target.SetInt(v)
 	case reflect.Uint:
 		v, _ := strconv.ParseUint(value, 10, 0)
+		target.SetUint(v)
+	case reflect.Int8:
+		v, _ := strconv.ParseInt(value, 10, 8)
+		target.SetInt(v)
+	case reflect.Uint8:
+		v, _ := strconv.ParseUint(value, 10, 8)
+		target.SetUint(v)
+	case reflect.Int32:
+		v, _ := strconv.ParseInt(value, 10, 32)
+		target.SetInt(v)
+	case reflect.Uint32:
+		v, _ := strconv.ParseUint(value, 10, 32)
 		target.SetUint(v)
 	case reflect.Int64:
 		v, _ := strconv.ParseInt(value, 10, 0)

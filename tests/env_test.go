@@ -20,6 +20,10 @@ type Env struct {
 
 	MaxInt    int    `env:"MAX_INT"`
 	MaxUint   uint   `env:"MAX_UINT"`
+	MaxInt8   int8   `env:"MAX_INT_8"`
+	MaxUint8  uint8  `env:"MAX_UINT_8"`
+	MaxInt32  int32  `env:"MAX_INT_32"`
+	MaxUint32 uint32 `env:"MAX_UINT_32"`
 	MaxInt64  int64  `env:"MAX_INT_64"`
 	MaxUint64 uint64 `env:"MAX_UINT_64"`
 
@@ -155,6 +159,10 @@ func (suite *EnvironmentTestSuite) TestWithDefault() {
 func (suite *EnvironmentTestSuite) TestTypeInt() {
 	os.Setenv("MAX_INT", fmt.Sprint(math.MaxInt))
 	os.Setenv("MAX_UINT", "18446744073709551615")
+	os.Setenv("MAX_INT_8", fmt.Sprint(math.MaxInt8))
+	os.Setenv("MAX_UINT_8", fmt.Sprint(math.MaxUint8))
+	os.Setenv("MAX_INT_32", fmt.Sprint(math.MaxInt32))
+	os.Setenv("MAX_UINT_32", fmt.Sprint(math.MaxUint32))
 	os.Setenv("MAX_INT_64", fmt.Sprint(math.MaxInt64))
 	os.Setenv("MAX_UINT_64", "18446744073709551615")
 
@@ -165,6 +173,14 @@ func (suite *EnvironmentTestSuite) TestTypeInt() {
 	if math.MaxUint != config.MaxUint {
 		suite.Fail("config does not contain max uint")
 	}
+	suite.Equal(math.MaxInt32, int(config.MaxInt32))
+	if math.MaxUint32 != config.MaxUint32 {
+		suite.Fail("config does not contain max uint32")
+	}
+	suite.Equal(math.MaxInt8, int(config.MaxInt8))
+	if math.MaxUint8 != config.MaxUint8 {
+		suite.Fail("config does not contain max uint32")
+	}
 	suite.Equal(int64(math.MaxInt64), config.MaxInt64)
 	if math.MaxUint64 != config.MaxUint64 {
 		suite.Fail("config does not contain max uint64")
@@ -172,6 +188,8 @@ func (suite *EnvironmentTestSuite) TestTypeInt() {
 
 	os.Unsetenv("MAX_INT")
 	os.Unsetenv("MAX_UINT")
+	os.Unsetenv("MAX_INT_32")
+	os.Unsetenv("MAX_UINT_32")
 	os.Unsetenv("MAX_INT_64")
 	os.Unsetenv("MAX_UINT_64")
 }
