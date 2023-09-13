@@ -17,7 +17,12 @@ const (
 )
 
 // Load The primary function to load the environment into the struct.
-func Load[T any](target *T, attr Attributes) (err error) {
+func Load[T any](target *T, opts ...Attribute) (err error) {
+	var attr attributes
+	for _, f := range opts {
+		f(&attr)
+	}
+
 	var values map[string]string
 	for _, path := range attr.EnvironmentFiles {
 		values, err = parseEnvFile(path)
@@ -38,7 +43,7 @@ func Load[T any](target *T, attr Attributes) (err error) {
 }
 
 // parse Will loop through all struct-fields, will act recursivly upon multi-level structs.
-func parse(v reflect.Value, config Attributes, values map[string]string) (reflect.Value, error) {
+func parse(v reflect.Value, config attributes, values map[string]string) (reflect.Value, error) {
 	var err error
 	el := v.Elem()
 	if el.Kind() == reflect.Struct {
