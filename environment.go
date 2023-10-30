@@ -31,14 +31,13 @@ func Load[T any](target *T, opts ...Attribute) (err error) {
 				if attr.ErrorOnMissingFile {
 					return e
 				}
-				err = nil
 				continue
 			}
 			return err
 		}
 	}
 	v := reflect.ValueOf(target)
-	v, err = parse(v, attr, values)
+	_, err = parse(v, attr, values)
 	return
 }
 
@@ -137,8 +136,11 @@ func setData(target reflect.Value, value string) (reflect.Value, error) {
 	case reflect.Uint64:
 		v, _ := strconv.ParseUint(value, 10, 0)
 		target.SetUint(v)
-	case reflect.Float64, reflect.Float32:
-		v, _ := strconv.ParseFloat(value, 0)
+	case reflect.Float32:
+		v, _ := strconv.ParseFloat(value, 32)
+		target.SetFloat(v)
+	case reflect.Float64:
+		v, _ := strconv.ParseFloat(value, 64)
 		target.SetFloat(v)
 	case reflect.String:
 		target.SetString(value)
