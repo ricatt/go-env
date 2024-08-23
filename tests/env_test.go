@@ -291,6 +291,24 @@ func (suite *EnvironmentTestSuite) TestSlicesFormatError() {
 	suite.Equal([]bool{false, true, false, true}, config.Bool)
 }
 
+func (suite *EnvironmentTestSuite) TestOverwritingSystemEnv() {
+	var config struct {
+		PackageName         string `env:"PACKAGE_NAME"`
+		ExternalServiceHost string `env:"EXTERNAL_SERVICE_HOST"`
+	}
+
+	// Sets initial value.
+	err := os.Setenv("EXTERNAL_SERVICE_HOST", "https://example.se")
+	suite.NoError(err)
+
+	// Using two different environment-files, overwriting both initial value and those specified first in the list.
+	err = env.Load(&config, env.EnvironmentFiles(".env", "overwrite.env"))
+	suite.NoError(err)
+
+	suite.Equal("env", config.PackageName)
+	suite.Equal("http://127.0.0.1", config.ExternalServiceHost)
+}
+
 func TestEnvironmentTestSuite(t *testing.T) {
 	suite.Run(t, new(EnvironmentTestSuite))
 }
