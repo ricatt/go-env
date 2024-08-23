@@ -241,14 +241,17 @@ func (suite *EnvironmentTestSuite) TestMultiLevelEnv() {
 	err := env.Load(&config, env.EnvironmentFiles(".env"))
 	suite.NoError(err)
 	suite.Equal("http://localhost", config.Host)
-	suite.Equal("http://example.com", config.ExternalService.Host)
+	suite.Equal("https://example.com", config.ExternalService.Host)
 	suite.Equal("username", config.ExternalService.Username)
 	suite.Equal("password", config.ExternalService.Password)
 }
 
-func (suite *EnvironmentTestSuite) TestForceIndivdualError() {
+func (suite *EnvironmentTestSuite) TestForceIndividualError() {
+	err := os.Unsetenv("FORCED_VALUE")
+	suite.NoError(err)
+
 	var config EnvForceValue
-	err := env.Load(&config, env.EnvironmentFiles("faulty.env"))
+	err = env.Load(&config, env.EnvironmentFiles("faulty.env"))
 	suite.Error(err)
 
 	err = env.Load(&config, env.EnvironmentFiles(".env"))
@@ -289,6 +292,45 @@ func (suite *EnvironmentTestSuite) TestSlicesFormatError() {
 	suite.Equal([]int{1, 2, 3, 0}, config.Int)
 	suite.Equal([]string{"str1", "str2", "", "str3"}, config.String)
 	suite.Equal([]bool{false, true, false, true}, config.Bool)
+}
+
+func (suite *EnvironmentTestSuite) TestOverwritingSystemEnv() {
+	type config struct {
+		PackageName         string `env:"PACKAGE_NAME"`
+		ExternalServiceHost string `env:"EXTERNAL_SERVICE_HOST"`
+	}
+
+	var (
+		err error
+		cnf config
+	)
+
+	// Sets initial value.
+	err = os.Setenv("EXTERNAL_SERVICE_HOST", "https://example.se")
+	suite.NoError(err)
+	err = os.Unsetenv("PACKAGE_NAME")
+	suite.NoError(err)
+
+	cnf = config{}
+	err = env.Load(&cnf)
+	suite.NoError(err)
+	suite.Equal("", cnf.PackageName)
+	suite.Equal("https://example.se", cnf.ExternalServiceHost)
+
+	cnf = config{}
+	// Using two different environment-files, overwriting both initial value and those specified first in the list.
+	err = env.Load(&cnf, env.EnvironmentFiles(".env"))
+	suite.NoError(err)
+	suite.Equal("env", cnf.PackageName)
+	suite.Equal("https://example.com", cnf.ExternalServiceHost)
+
+	cnf = config{}
+	// Using two different environment-files, overwriting both initial value and those specified first in the list.
+	err = env.Load(&cnf, env.EnvironmentFiles(".env", "overwrite.env"))
+	suite.NoError(err)
+
+	suite.Equal("env", cnf.PackageName)
+	suite.Equal("http://127.0.0.1", cnf.ExternalServiceHost)
 }
 
 func TestEnvironmentTestSuite(t *testing.T) {

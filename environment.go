@@ -2,6 +2,7 @@ package env
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -27,7 +28,8 @@ func Load[T any](target *T, opts ...Attribute) (err error) {
 	for _, path := range attr.EnvironmentFiles {
 		values, err = parseEnvFile(path)
 		if err != nil {
-			if e, ok := err.(*os.PathError); ok {
+			var e *os.PathError
+			if errors.As(err, &e) {
 				if attr.ErrorOnMissingFile {
 					return e
 				}
@@ -186,6 +188,11 @@ func parseEnvFile(path string) (map[string]string, error) {
 			continue
 		}
 		values[line[0]] = line[1]
+
+		err = os.Setenv(line[0], line[1])
+		if err != nil {
+			return nil, err
+		}
 	}
 	return values, scanner.Err()
 }
