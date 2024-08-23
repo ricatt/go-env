@@ -1,4 +1,11 @@
 # Changelog
+
+## 2024-08-23
+### v0.8.0
+It will actually set the environment-variables properly through os.Setenv now.
+
+It will always fall back to the last .env-file in the list. So if there are two files in env.EnvironmentFiles, then it will start by setting and using the first one, then go about and repeat this with the second file. Never unsetting, but always overwriting with new data.
+
 ## 2023-02-02
 ### v0.7.0
 Added force-env tag.
