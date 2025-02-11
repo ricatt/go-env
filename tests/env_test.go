@@ -2,11 +2,12 @@ package tests
 
 import (
 	"fmt"
-	"github.com/ricatt/go-env"
-	"github.com/stretchr/testify/suite"
 	"math"
 	"os"
 	"testing"
+
+	"github.com/ricatt/go-env"
+	"github.com/stretchr/testify/suite"
 )
 
 type Env struct {
@@ -93,16 +94,6 @@ func (suite *EnvironmentTestSuite) TestOptionalEnvStruct() {
 	suite.NoError(err)
 	err = env.Load(&envOptional, env.EnvironmentFiles(".env"))
 	suite.NoError(err)
-}
-
-func (suite *EnvironmentTestSuite) TestInvalidTypeEnvStruct() {
-	var (
-		config EnvInvalidType
-		err    error
-	)
-	err = env.Load(&config, env.EnvironmentFiles(".env"))
-	suite.Error(err)
-	suite.Equal("env: type \"interface\" not supported", err.Error())
 }
 
 func (suite *EnvironmentTestSuite) TestErrorInvalidPath() {
@@ -331,6 +322,19 @@ func (suite *EnvironmentTestSuite) TestOverwritingSystemEnv() {
 
 	suite.Equal("env", cnf.PackageName)
 	suite.Equal("http://127.0.0.1", cnf.ExternalServiceHost)
+}
+
+func (suite *EnvironmentTestSuite) TestMultiLineValue() {
+	var cnf struct {
+		MultiLineValue string `env:"MULTILINE_VALUE"`
+	}
+
+	err := env.Load(&cnf, env.EnvironmentFiles(".env"))
+	suite.NoError(err)
+
+	expected := "Lorem ipsum\ndolor sit amet.\n"
+
+	suite.Equal(expected, cnf.MultiLineValue)
 }
 
 func TestEnvironmentTestSuite(t *testing.T) {

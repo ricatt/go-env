@@ -24,9 +24,9 @@ func Load[T any](target *T, opts ...Attribute) (err error) {
 		f(&attr)
 	}
 
-	var values map[string]string
+	values := make(map[string]string)
 	for _, path := range attr.EnvironmentFiles {
-		values, err = parseEnvFile(path)
+		values, err = parseEnvFile(path, values)
 		if err != nil {
 			var e *os.PathError
 			if errors.As(err, &e) {
@@ -52,6 +52,7 @@ func parse(v reflect.Value, config attributes, values map[string]string) (reflec
 		for i := 0; i < numField; i++ {
 			field := el.Field(i)
 			tag := el.Type().Field(i).Tag.Get(tagName)
+
 			forcedEnv := isForced(el.Type().Field(i))
 			if isEqual(field) {
 				continue
@@ -70,6 +71,7 @@ func parse(v reflect.Value, config attributes, values map[string]string) (reflec
 					}
 					continue
 				}
+
 				field, err = setData(field, value)
 				if err != nil {
 					return el, err
@@ -146,6 +148,8 @@ func setData(target reflect.Value, value string) (reflect.Value, error) {
 		target.SetFloat(v)
 	case reflect.String:
 		target.SetString(value)
+	case reflect.Interface:
+		target.Set(reflect.ValueOf(value))
 
 	default:
 		return target, fmt.Errorf("env: type \"%s\" not supported", target.Kind())
@@ -155,44 +159,70 @@ func setData(target reflect.Value, value string) (reflect.Value, error) {
 
 // getValue fetches the value from the environment and fetches potential default values from struct field.
 // Default value will only be set if value is empty.
-func getValue(field reflect.StructField, values map[string]string) (value string) {
+func getValue(field reflect.StructField, values map[string]string) string {
 	tag := field.Tag.Get(tagName)
-	value = os.Getenv(tag)
-	if value == "" {
-		value = values[tag]
+	value, ok := values[tag]
+	if value == "" || !ok {
+		value = os.Getenv(tag)
 	}
 	defaultValue := field.Tag.Get(tagDefaultValue)
 	if value == "" {
 		value = defaultValue
 	}
-	return
+	return value
 }
 
 // parseEnvFile Will fetch all entries from provded file and set it in the environment.
-func parseEnvFile(path string) (map[string]string, error) {
-	var (
-		err    error
-		file   *os.File
-		values = make(map[string]string)
-	)
-	file, err = os.Open(path)
+func parseEnvFile(filename string, envMap map[string]string) (map[string]string, error) {
+	file, err := os.Open(filename)
 	if err != nil {
-		return values, err
+		return nil, err
 	}
 	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
+
+	var key, value string
+	inMultiLine := false
+
 	for scanner.Scan() {
-		line := strings.SplitN(scanner.Text(), "=", 2)
-		// Continue if we get a key without value.
-		if len(line) <= 1 || len(line[1]) == 0 {
+		line := strings.TrimSpace(scanner.Text())
+
+		// Ignore empty lines and comments
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		values[line[0]] = line[1]
 
-		err = os.Setenv(line[0], line[1])
-		if err != nil {
-			return nil, err
+		// Detect key-value pair
+		if !inMultiLine {
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) != 2 {
+				continue // Skip malformed lines
+			}
+			key = strings.TrimSpace(parts[0])
+			value = strings.TrimSpace(parts[1])
+
+			// Detect multi-line start (values enclosed in double quotes)
+			if strings.HasPrefix(value, "\"") && !strings.HasSuffix(value, "\"") {
+				inMultiLine = true
+				value = strings.TrimPrefix(value, "\"") // Remove opening quote
+				continue
+			}
+
+			// Store if it's a normal single-line key-value pair
+			envMap[key] = strings.Trim(value, "\"")
+		} else {
+			// Accumulate multi-line values
+			value += "\n" + line
+
+			// Detect end of multi-line value
+			if strings.HasSuffix(line, "\"") {
+				inMultiLine = false
+				value = strings.TrimSuffix(value, "\"") // Remove closing quote
+				envMap[key] = value
+			}
 		}
 	}
-	return values, scanner.Err()
+	return envMap, scanner.Err()
 }
+
