@@ -1,5 +1,7 @@
 # go-env
 
+**This project has moved to [Codeberg](https://codeberg.org/riat/go-env)**
+
 ## About the project
 This is just a small hobby-package, inspired after many discussions of "how do we want to load configuration into the project".
 
